@@ -1,33 +1,43 @@
 from struct import unpack
 import os
+import sys
 
-datfile = open('file.dat', 'rb')
 
-buffer = datfile.read(28)
+def undat (src, dst):
+    datfile = open(src, 'rb')
 
-header = unpack('<LLL16s', buffer)
+    buffer = datfile.read(28)
 
-print header
+    header = unpack('<LLL16s', buffer)
 
-buffer = datfile.read(8)
-while buffer:
-    subheader = unpack('<lHH', buffer)
-    print subheader
-    path = datfile.read(subheader[1])
-    path = ''.join([ chr(ord(c) ^ 0xFF) for c in path])
-    print path
-    
-    if subheader[0] != -1:
-        if not os.path.exists('out' + os.path.dirname(path)):
-            os.makedirs('out' + os.path.dirname(path))
-        file = open('out' + path, 'wb')
-        buffer = datfile.read(subheader[0])
-        buffer = ''.join([chr(ord(c) ^ 0xFF) for c in buffer])
-        file.write(buffer)
-        file.close();
-    else:
-        os.makedirs('out' + path)
-        
     buffer = datfile.read(8)
+    while buffer:
+        subheader = unpack('<lHH', buffer)
+        path = datfile.read(subheader[1])
+        path = ''.join([ chr(ord(c) ^ 0xFF) for c in path])
+        print path
+    
+        if subheader[0] != -1:
+            if not os.path.exists(dst + os.path.dirname(path)):
+                os.makedirs(dst + os.path.dirname(path))
+            file = open(dst + path, 'wb')
+            buffer = datfile.read(subheader[0])
+            buffer = ''.join([chr(ord(c) ^ 0xFF) for c in buffer])
+            file.write(buffer)
+            file.close();
+        else:
+            os.makedirs(dst + path)
+        
+        buffer = datfile.read(8)
 
-datfile.close()
+    datfile.close()
+
+def usage():
+    print ("Usage:")
+    print (sys.argv[0] + " <datfile> <output_dir>")
+
+if __name__ == "__main__":
+    if (len(sys.argv) != 3):
+        usage()
+    else:
+        undat(sys.argv[1], sys.argv[2])
